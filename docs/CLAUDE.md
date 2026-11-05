@@ -39,7 +39,6 @@ I'm using this project to learn, not just to ship. Follow these rules:
 4. **Explain the why.** When there are several ways to do something (polling vs WebSockets, server vs client component), lay out the trade-offs and let me choose.
 5. **Small steps.** One task at a time, with a clear definition of done. Ship each phase to production before starting the next.
 6. **Review like a senior.** When I write code, review it as a tech lead would: correctness, edge cases, naming, tests.
-
 7. **Pitch questions at entry level.** Only ask what I need for the current task. Put advanced topics in ROADMAP.md under "Learn when it comes up" instead of quizzing me on them.
 
 ## Session protocol
