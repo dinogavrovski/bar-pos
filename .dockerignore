@@ -1,0 +1,14 @@
+# Keep the build context small and secret-free: Docker sends everything not listed here to the builder.
+**/node_modules
+**/dist
+**/.next
+**/*.tsbuildinfo
+.git
+.husky
+.vscode
+.env
+.env.*
+!.env.example
+docs
+**/Dockerfile
+docker-compose*.yml

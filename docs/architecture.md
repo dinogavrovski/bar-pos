@@ -33,3 +33,5 @@
 
 - Renaming or dropping columns safely during a deploy (search "expand and contract migrations")
 - Liveness vs readiness checks in detail
+- Running migrations on deploy: one-off container vs on API startup (decide in the CD task)
+- Image size: distroless or slimmer base images, `pnpm deploy` internals

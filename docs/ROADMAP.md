@@ -3,8 +3,8 @@
 ## Current status
 
 - **Phase:** 0 — Foundation & pipeline
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page
-- **Next task:** Dockerfiles (multi-stage) for web and api
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`
+- **Next task:** GitHub Actions CI: install → lint → typecheck → test → build images
 - **Blockers:** none
 
 ---
@@ -18,7 +18,7 @@ _Goal: an empty app that is already live, tested and auto-deployed._
 - [x] ESLint + Prettier + a pre-commit hook
 - [x] Postgres in docker-compose for local dev; first Drizzle migration
 - [x] `/health` endpoint on the API; web page that shows API status
-- [ ] Dockerfiles (multi-stage) for web and api
+- [x] Dockerfiles (multi-stage) for web and api
 - [ ] GitHub Actions CI: install → lint → typecheck → test → build images
 - [ ] Provision the VPS: SSH keys, firewall, Docker, Caddy with HTTPS on a domain
 - [ ] CD: on merge to `main`, build, push images, deploy to the VPS
@@ -119,6 +119,9 @@ _One line each: date, decision, why._
 - 2026-11-13: Drizzle `casing: 'snake_case'`: camelCase in TS, snake_case in SQL.
 - 2026-11-13: All API routes under `/api` prefix, so Caddy can route `/api/*` without rewriting paths.
 - 2026-11-13: Status page is a server component (no client JS); TanStack Query waits for Phase 2.
+- 2026-11-13: API bundled with tsup for production, so the raw-TS `packages/shared` gets compiled in; plain Node can't run .ts.
+- 2026-11-13: Web uses Next `output: 'standalone'`: the image ships only server.js + traced deps.
+- 2026-11-13: Containers run as the non-root `node` user; Docker healthchecks use liveness, not readiness.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
 ## Things I faked
@@ -132,4 +135,4 @@ _Anything that works but I can't fully explain yet. Clear these weekly._
 _One line per session: date, machine, what got done._
 
 - 2026-11-05: Roadmap and CLAUDE.md created.
-- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted.
+- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted. Dockerfiles + compose `app` profile, graceful SIGTERM shutdown.

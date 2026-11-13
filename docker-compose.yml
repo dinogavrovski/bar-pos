@@ -1,4 +1,7 @@
-# Local development services. Production gets its own compose file later.
+# Local services.
+#   pnpm db:up     -> only Postgres (for normal dev with `pnpm dev`)
+#   pnpm stack:up  -> Postgres + the production images of api and web (to test the Dockerfiles)
+# Production on the VPS gets its own compose file later.
 services:
   db:
     image: postgres:18-alpine
@@ -19,6 +22,37 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    profiles: ['app'] # only started when the "app" profile is asked for
+    build:
+      context: . # repo root, so the Dockerfile can see the workspace and packages/shared
+      dockerfile: apps/api/Dockerfile
+    image: barpos-api:dev
+    init: true # tiny init process as PID 1: forwards signals and cleans up zombie processes
+    environment:
+      # Inside the compose network, the database's hostname is its service name: "db", on its internal port 5432.
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    ports:
+      - '3001:3001'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    profiles: ['app']
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: barpos-web:dev
+    init: true
+    environment:
+      API_URL: http://api:3001 # server-to-server, over the compose network
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   pgdata:
