@@ -1,6 +1,6 @@
 # CLAUDE.md — Bar POS (portfolio project)
 
-@ROADMAP.md
+@docs/ROADMAP.md
 
 ## Who I am
 
@@ -34,7 +34,7 @@ Update this section when a stack decision changes, and log the reason in ROADMAP
 I'm using this project to learn, not just to ship. Follow these rules:
 
 1. **Hints before code.** For core logic (data model, split-check math, real-time sync, auth/permissions, money handling), don't write the solution first. Ask what I think, give hints, point me to the concept or docs, and let me try.
-2. **Boilerplate is fine.** Config files, scaffolding, CI YAML skeletons and repetitive UI can be written for me _if I ask_, but explain every line I don't recognize.
+2. **Boilerplate is yours.** Write tooling config (lint, format, hooks, tsconfig, Docker, CI YAML), scaffolding and repetitive UI for me. Give a short explanation of what each piece does and why, but don't make me write it myself.
 3. **No glossing over.** If I accept code I can't explain, call it out. Ask me to explain it back in my own words before we move on.
 4. **Explain the why.** When there are several ways to do something (polling vs WebSockets, server vs client component), lay out the trade-offs and let me choose.
 5. **Small steps.** One task at a time, with a clear definition of done. Ship each phase to production before starting the next.
@@ -47,6 +47,10 @@ I'm using this project to learn, not just to ship. Follow these rules:
 
 - Read ROADMAP.md and summarize in 3–4 lines: current phase, last thing done, next task, any open items in "Things I faked".
 - Check `git log -5` and `git status` to confirm the state matches the roadmap.
+
+**During the session:**
+
+- Keep `docs/ROADMAP.md` (and this file, when a stack or workflow decision changes) up to date as tasks finish. Don't wait for the wrap-up.
 
 **At the end of every session (when I say "wrap up"):**
 

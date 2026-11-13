@@ -1,18 +1,21 @@
 # Bar POS — Roadmap & Progress
 
 ## Current status
+
 - **Phase:** 0 — Foundation & pipeline
-- **Last done:** Roadmap created
-- **Next task:** Draw the architecture (web ↔ API ↔ DB ↔ WebSockets) and decide what CI must check before deploying
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook
+- **Next task:** Postgres in docker-compose for local dev; first Drizzle migration
 - **Blockers:** none
 
 ---
 
 ## Phase 0 — Foundation & pipeline
-*Goal: an empty app that is already live, tested and auto-deployed.*
-- [ ] Architecture sketch (add it to `docs/architecture.md`)
-- [ ] Monorepo: `apps/web`, `apps/api`, `packages/shared`; TypeScript strict everywhere
-- [ ] ESLint + Prettier + a pre-commit hook
+
+_Goal: an empty app that is already live, tested and auto-deployed._
+
+- [x] Architecture sketch (add it to `docs/architecture.md`)
+- [x] Monorepo: `apps/web`, `apps/api`, `packages/shared`; TypeScript strict everywhere
+- [x] ESLint + Prettier + a pre-commit hook
 - [ ] Postgres in docker-compose for local dev; first Drizzle migration
 - [ ] `/health` endpoint on the API; web page that shows API status
 - [ ] Dockerfiles (multi-stage) for web and api
@@ -26,7 +29,9 @@
 **Done when:** pushing to `main` updates the live site with zero manual steps.
 
 ## Phase 1 — Domain & data model
-*Goal: the hardest design problem, solved on paper first, then in code with tests.*
+
+_Goal: the hardest design problem, solved on paper first, then in code with tests._
+
 - [ ] Paper design: venue, area, table, seat, menu category, item, modifier, order, order item, check, payment, staff, shift
 - [ ] Drizzle schema + migrations + seed script (a realistic bar menu)
 - [ ] Shared Zod schemas in `packages/shared`
@@ -38,6 +43,7 @@
 **Done when:** you can explain the schema on a whiteboard and the domain tests cover the split edge cases.
 
 ## Phase 2 — Waiter app
+
 - [ ] Floor plan view with table status (free / open / waiting to pay)
 - [ ] Open a table, assign items to seats, add modifiers and notes
 - [ ] Send the order to the bar or kitchen (route items by category)
@@ -47,6 +53,7 @@
 **Questions:** Which state belongs on the server and which only in the UI? What does an optimistic update do when the server rejects it?
 
 ## Phase 3 — Real-time
+
 - [ ] WebSocket server in the API; rooms per venue or station
 - [ ] Bar and kitchen display: incoming tickets, mark in progress / ready
 - [ ] Waiter gets notified when items are ready
@@ -56,6 +63,7 @@
 **Questions:** Why WebSockets instead of polling here? What's the source of truth, the event or the database? Optimistic locking vs last-write-wins, which fits a POS?
 
 ## Phase 4 — Auth & roles
+
 - [ ] Staff PIN login with a session per device
 - [ ] Roles: waiter, bartender, manager
 - [ ] API-side authorization (e.g. only a manager can void or give discounts)
@@ -65,6 +73,7 @@
 **Questions:** Cookies vs tokens for a shared tablet? Why is hiding a button not security?
 
 ## Phase 5 — Payments & closing checks
+
 - [ ] Partial payments, mixed cash and card, tips
 - [ ] Simulated card flow or Stripe test mode
 - [ ] Close a check, reopen it (manager only), receipt view
@@ -73,6 +82,7 @@
 **Questions:** Why integer cents? How do you make "pay" idempotent so a double tap doesn't charge twice?
 
 ## Phase 6 — Manager dashboard
+
 - [ ] Shift open/close with cash count
 - [ ] Reports: sales by hour, top items, sales per waiter, tips
 - [ ] Charts (Recharts) and data tables (TanStack Table)
@@ -81,6 +91,7 @@
 **Questions:** Compute reports on the fly or pre-aggregate? Which indexes do your report queries need? (Use `EXPLAIN ANALYZE`.)
 
 ## Phase 7 — Production hardening
+
 - [ ] Playwright E2E: open table → order → split → pay → report, run in CI
 - [ ] Automated nightly DB backups, plus one practiced restore
 - [ ] Load-test the WebSocket server (e.g. k6)
@@ -88,6 +99,7 @@
 - [ ] Seeded public demo with "Log in as waiter / manager" buttons; demo data resets nightly
 
 ## Phase 8 — Polish & presentation
+
 - [ ] README: screenshots, architecture diagram, how to run locally, decisions section
 - [ ] 2-minute demo video
 - [ ] CI badge, clean issues/PR history
@@ -97,14 +109,22 @@
 ---
 
 ## Decisions
-*One line each: date, decision, why.*
+
+_One line each: date, decision, why._
+
 - 2026-11-05: Separate Fastify API instead of Next.js API routes, to learn backend properly and to host the WebSocket server.
 - 2026-11-05: Self-hosted VPS instead of Vercel, to learn real deployment.
+- 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
 ## Things I faked
-*Anything that works but I can't fully explain yet. Clear these weekly.*
+
+_Anything that works but I can't fully explain yet. Clear these weekly._
+
 - (empty)
 
 ## Session log
-*One line per session: date, machine, what got done.*
+
+_One line per session: date, machine, what got done._
+
 - 2026-11-05: Roadmap and CLAUDE.md created.
+- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up.
