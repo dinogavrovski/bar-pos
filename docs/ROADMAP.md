@@ -3,8 +3,8 @@
 ## Current status
 
 - **Phase:** 0 — Foundation & pipeline
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook
-- **Next task:** Postgres in docker-compose for local dev; first Drizzle migration
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`)
+- **Next task:** `/health` endpoints (process up + database reachable); web page that shows API status
 - **Blockers:** none
 
 ---
@@ -16,7 +16,7 @@ _Goal: an empty app that is already live, tested and auto-deployed._
 - [x] Architecture sketch (add it to `docs/architecture.md`)
 - [x] Monorepo: `apps/web`, `apps/api`, `packages/shared`; TypeScript strict everywhere
 - [x] ESLint + Prettier + a pre-commit hook
-- [ ] Postgres in docker-compose for local dev; first Drizzle migration
+- [x] Postgres in docker-compose for local dev; first Drizzle migration
 - [ ] `/health` endpoint on the API; web page that shows API status
 - [ ] Dockerfiles (multi-stage) for web and api
 - [ ] GitHub Actions CI: install → lint → typecheck → test → build images
@@ -114,6 +114,9 @@ _One line each: date, decision, why._
 
 - 2026-11-05: Separate Fastify API instead of Next.js API routes, to learn backend properly and to host the WebSocket server.
 - 2026-11-05: Self-hosted VPS instead of Vercel, to learn real deployment.
+- 2026-11-13: Integer identity IDs (not uuid): readable, small; access control belongs on the API, not in unguessable IDs.
+- 2026-11-13: All timestamps `timestamptz`: store the exact moment, convert to Europe/Skopje only for display (DST-safe reports).
+- 2026-11-13: Drizzle `casing: 'snake_case'`: camelCase in TS, snake_case in SQL.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
 ## Things I faked
@@ -127,4 +130,4 @@ _Anything that works but I can't fully explain yet. Clear these weekly._
 _One line per session: date, machine, what got done._
 
 - 2026-11-05: Roadmap and CLAUDE.md created.
-- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up.
+- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied.

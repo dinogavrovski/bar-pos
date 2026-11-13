@@ -1,0 +1,24 @@
+# Local development services. Production gets its own compose file later.
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # host:container — 5433 on your machine, because a native Postgres already uses 5432.
+      - '${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      # Named volume so data survives `docker compose down` (but not `down -v`).
+      # Postgres 18 images keep data under /var/lib/postgresql (not .../data like older versions).
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
