@@ -3,7 +3,19 @@
 
 # ---------- base: Node + pnpm, shared by the stages below ----------
 FROM node:24-alpine AS base
-RUN corepack enable
+# Download pnpm once, in its own cached layer, with retries.
+# Corepack reads the exact version from package.json "packageManager".
+# Retries because one DNS/network hiccup on the CI runner (EAI_AGAIN) shouldn't fail the build.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+COPY package.json /tmp/pm/package.json
+RUN corepack enable \
+  && cd /tmp/pm \
+  && for i in 1 2 3 4 5; do \
+       corepack install && exit 0; \
+       echo "corepack install failed (attempt $i), retrying in $((i * 3))s..."; \
+       sleep $((i * 3)); \
+     done; \
+     exit 1
 WORKDIR /repo
 
 # ---------- build: install everything, compile, then cut a production-only copy ----------
