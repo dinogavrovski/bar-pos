@@ -2,16 +2,16 @@
 
 ## Current status
 
-- **Phase:** 0 — Foundation & pipeline
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds)
-- **Next task:** Push and watch the first CI run go green; turn on branch protection for `main` (require CI). Then: provision the VPS
+- **Phase:** 1 — Domain & data model (Phase 0 done)
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
+- **Next task:** Paper design of the data model (venue, area, table, seat, menu, order, check, payment, staff, shift)
 - **Blockers:** none
 
 ---
 
-## Phase 0 — Foundation & pipeline
+## Phase 0 — Foundation & CI
 
-_Goal: an empty app that is already live, tested and auto-deployed._
+_Goal: an empty app that is already tested, containerized and checked by CI on every PR._
 
 - [x] Architecture sketch (add it to `docs/architecture.md`)
 - [x] Monorepo: `apps/web`, `apps/api`, `packages/shared`; TypeScript strict everywhere
@@ -20,13 +20,11 @@ _Goal: an empty app that is already live, tested and auto-deployed._
 - [x] `/health` endpoint on the API; web page that shows API status
 - [x] Dockerfiles (multi-stage) for web and api
 - [x] GitHub Actions CI: install → lint → typecheck → test → build images
-- [ ] Provision the VPS: SSH keys, firewall, Docker, Caddy with HTTPS on a domain
-- [ ] CD: on merge to `main`, build, push images, deploy to the VPS
-- [ ] Sentry wired up in web and api
+- [x] Branch protection on `main`: PR required, CI must pass
 
-**Questions to answer yourself:** Why do multi-stage builds give smaller images? What do CI caching keys depend on? Where do secrets live, and why never in the repo? How do you roll back a bad deploy?
+**Questions to answer yourself:** Why do multi-stage builds give smaller images? What do CI caching keys depend on? Where do secrets live, and why never in the repo?
 
-**Done when:** pushing to `main` updates the live site with zero manual steps.
+**Done when:** a PR can only merge into `main` with green CI, and `pnpm stack:up` runs the production images locally.
 
 ## Phase 1 — Domain & data model
 
@@ -90,13 +88,22 @@ _Goal: the hardest design problem, solved on paper first, then in code with test
 
 **Questions:** Compute reports on the fly or pre-aggregate? Which indexes do your report queries need? (Use `EXPLAIN ANALYZE`.)
 
-## Phase 7 — Production hardening
+## Phase 7 — Deploy & production hardening
 
+_Goal: the finished app live on a real server, deployed automatically. Do this when getting ready to apply for jobs/internships._
+
+- [ ] Provision the VPS: SSH keys, firewall, Docker, Caddy with HTTPS on a domain
+- [ ] CD: on merge to `main`, build, push images to a registry, deploy to the VPS (decide how migrations run)
+- [ ] Sentry wired up in web and api
 - [ ] Playwright E2E: open table → order → split → pay → report, run in CI
 - [ ] Automated nightly DB backups, plus one practiced restore
 - [ ] Load-test the WebSocket server (e.g. k6)
 - [ ] Structured logs and a basic uptime check
 - [ ] Seeded public demo with "Log in as waiter / manager" buttons; demo data resets nightly
+
+**Questions:** How do you roll back a bad deploy? Where do production secrets live?
+
+**Done when:** merging to `main` updates the live site with zero manual steps.
 
 ## Phase 8 — Polish & presentation
 
@@ -124,6 +131,7 @@ _One line each: date, decision, why._
 - 2026-11-13: Containers run as the non-root `node` user; Docker healthchecks use liveness, not readiness.
 - 2026-11-13: CI runs tests against a real Postgres service container and applies all migrations to a fresh DB, instead of mocking the database.
 - 2026-11-13: Vitest; API split into `buildApp()` (testable with `app.inject`) and `index.ts` (starts the server).
+- 2026-11-13: Deploy (VPS, CD, Sentry) moved to Phase 7, near job applications, so I don't pay for a server for months. CI building and `pnpm stack:up` running the production images keep the deploy risk low until then.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
 ## Things I faked
@@ -137,4 +145,4 @@ _Anything that works but I can't fully explain yet. Clear these weekly._
 _One line per session: date, machine, what got done._
 
 - 2026-11-05: Roadmap and CLAUDE.md created.
-- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted. Dockerfiles + compose `app` profile, graceful SIGTERM shutdown. Vitest + first API tests, CI workflow.
+- 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted. Dockerfiles + compose `app` profile, graceful SIGTERM shutdown. Vitest + first API tests, CI workflow (green on GitHub after fixing a transient pnpm download failure with retries), branch protection on. Deploy moved to Phase 7; Phase 0 done.
