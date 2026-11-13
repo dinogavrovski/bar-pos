@@ -1,7 +1,9 @@
+import { existsSync } from 'node:fs'
 import { defineConfig } from 'drizzle-kit'
 
 // drizzle-kit runs outside the API process, so it loads the root .env itself.
-process.loadEnvFile('../../.env')
+// In CI (and later production) there is no .env: the variables are set directly.
+if (existsSync('../../.env')) process.loadEnvFile('../../.env')
 
 const url = process.env.DATABASE_URL
 if (!url) throw new Error('DATABASE_URL is not set (copy .env.example to .env)')

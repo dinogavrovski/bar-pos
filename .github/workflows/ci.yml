@@ -1,0 +1,107 @@
+name: CI
+
+# When to run: every push to main, and every pull request (from any branch).
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# If you push again to the same branch while CI is still running, cancel the old run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# The workflow can only read the repo (least privilege). CD will ask for more later.
+permissions:
+  contents: read
+
+jobs:
+  # ---------- Job 1: code checks ----------
+  check:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # A real Postgres next to the job, like `pnpm db:up` locally. Thrown away after the run.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: barpos
+          POSTGRES_PASSWORD: barpos_ci_password # throwaway, only exists inside this run
+          POSTGRES_DB: barpos
+        ports:
+          - 5432:5432
+        # Don't start the steps until Postgres accepts connections.
+        options: >-
+          --health-cmd "pg_isready -U barpos -d barpos"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # Available to every step below (instead of a .env file).
+    env:
+      DATABASE_URL: postgres://barpos:barpos_ci_password@localhost:5432/barpos
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Install pnpm (version from package.json "packageManager")
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node 24 and cache the pnpm store
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          # Cache key = hash of pnpm-lock.yaml: same lockfile -> reuse downloaded packages.
+          cache: pnpm
+
+      - name: Install dependencies
+        # --frozen-lockfile: fail if package.json and pnpm-lock.yaml disagree, never "fix" it silently.
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Apply migrations to a fresh database
+        # Proves every migration applies cleanly from zero, in order.
+        run: pnpm db:migrate
+
+      - name: Test
+        run: pnpm test
+
+  # ---------- Job 2: build the production images ----------
+  docker:
+    name: Build Docker images
+    # Only build images if the code checks passed.
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Build api and web in parallel, as two copies of this job.
+      matrix:
+        app: [api, web]
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx (the builder that supports caching)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.app }} image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: false # CD will push images to a registry; for now we only prove they build
+          tags: barpos-${{ matrix.app }}:ci
+          # Reuse Docker layers from earlier runs (stored in GitHub's cache), one cache per app.
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
