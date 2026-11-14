@@ -3,8 +3,8 @@
 ## Current status
 
 - **Phase:** 1 — Domain & data model (Phase 0 done)
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
-- **Next task:** Paper design, continued: modifiers, then money (check, payment), then shifts. Round 1 (venue, users, items, tabs, tab_items) is drafted.
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
+- **Next task:** Paper design, continued: modifiers, then money (check, payment), then shifts. Round 1 is in code: `users`, `items`, `tabs`, `tab_items` (migration 0001, constraints tested against Postgres).
 - **Blockers:** none
 
 ---
@@ -143,6 +143,9 @@ _One line each: date, decision, why._
 - 2026-11-14: Printed tickets instead of bar/kitchen display screens, matching how bars here work. `sentAt` marks what's been printed, so only new items print.
 - 2026-11-14: Food prints on a separate kitchen printer, drinks on the bar printer; an item's category decides which ticket it goes on.
 - 2026-11-14: `sentAt` / `voidedAt` are nullable timestamps (empty = not yet), not booleans: they record when, and `voidedBy` records who.
+- 2026-11-14: Business rules enforced in Postgres too (CHECK, UNIQUE, enums), not only in API code: void needs both when and who, PIN unique per venue, prices > 0, people >= 1.
+- 2026-11-14: Schema split into one file per table under `src/db/schema/`, re-exported from `index.ts`.
+- 2026-11-14: No `status` column on tabs: open means `closedAt IS NULL`, so the two can never disagree.
 - 2026-11-14: Voids are kept and recorded (`voidedAt`, `voidedBy`), never deleted, so managers can spot void-after-cash theft.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
