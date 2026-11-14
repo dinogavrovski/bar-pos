@@ -10,10 +10,10 @@ I'm Dino, a CS student and working bartender/barista in Skopje. This is my flags
 
 A point-of-sale system for bars and restaurants, inspired by Toast and Square for Restaurants:
 
-- Waiter tablet app: open tables, add items per seat, send orders
-- Bar and kitchen display screens with live updates
-- Split checks by seat, by item or evenly; partial payments; tips
-- Staff PIN login with roles (waiter, bartender, manager)
+- Order terminal at the bar: open tabs, add items per person, send orders (built for how bars in Macedonia work: the waiter takes the order at the table and enters it on a shared terminal)
+- Sending an order prints a ticket for the bartender with only the newly added items; no bar or kitchen display screens
+- Split the bill by person, by item or evenly; partial payments; tips
+- Staff PIN login with roles (admin: managers/owners; normal: waiters/bartenders); voids are recorded, never deleted
 - Manager dashboard: shift reports, top sellers, sales by hour
 - Deployed live with a seeded demo and one-click demo logins
 

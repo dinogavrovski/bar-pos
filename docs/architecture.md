@@ -35,3 +35,4 @@
 - Liveness vs readiness checks in detail
 - Running migrations on deploy: one-off container vs on API startup (decide in the CD task)
 - Image size: distroless or slimmer base images, `pnpm deploy` internals
+- Printing to a real thermal printer from a web app (ESC/POS, network printers, a local print agent)

@@ -4,7 +4,7 @@
 
 - **Phase:** 1 — Domain & data model (Phase 0 done)
 - **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
-- **Next task:** Paper design of the data model (venue, area, table, seat, menu, order, check, payment, staff, shift)
+- **Next task:** Paper design, continued: modifiers, then money (check, payment), then shifts. Round 1 (venue, users, items, tabs, tab_items) is drafted.
 - **Blockers:** none
 
 ---
@@ -30,40 +30,44 @@ _Goal: an empty app that is already tested, containerized and checked by CI on e
 
 _Goal: the hardest design problem, solved on paper first, then in code with tests._
 
-- [ ] Paper design: venue, area, table, seat, menu category, item, modifier, order, order item, check, payment, staff, shift
+- [ ] Paper design: venue, users, items (menu), tabs, tab_items (ordered items), modifiers, check, payment, shift
 - [ ] Drizzle schema + migrations + seed script (a realistic bar menu)
 - [ ] Shared Zod schemas in `packages/shared`
-- [ ] Pure domain functions: split evenly, by seat, by item; move item between checks; merge tables
+- [ ] Pure domain functions: split evenly, by person, by item; move item between tabs; merge tabs
 - [ ] Unit tests for every split and rounding edge case
 
 **Questions:** Splitting 1000 den three ways, where does the leftover denar go? Is a check derived from orders or stored separately? What happens to a split check when an item is voided?
 
 **Done when:** you can explain the schema on a whiteboard and the domain tests cover the split edge cases.
 
-## Phase 2 — Waiter app
+## Phase 2 — Order terminal app
 
-- [ ] Floor plan view with table status (free / open / waiting to pay)
-- [ ] Open a table, assign items to seats, add modifiers and notes
-- [ ] Send the order to the bar or kitchen (route items by category)
+_How bars here work: the waiter takes the order at the table, then enters it on a shared terminal at the bar._
+
+- [ ] Tab list: each user sees their open tabs
+- [ ] Open a tab (name, number of people), search items by name, assign items to a person, add modifiers and notes
+- [ ] Send the order: prints a ticket with only the not-yet-sent items
 - [ ] TanStack Query with optimistic updates and rollback on error
-- [ ] Tablet-first layout, big touch targets
+- [ ] Touch-first layout for a counter terminal, big touch targets
 
 **Questions:** Which state belongs on the server and which only in the UI? What does an optimistic update do when the server rejects it?
 
-## Phase 3 — Real-time
+## Phase 3 — Ticket printing & real-time
 
-- [ ] WebSocket server in the API; rooms per venue or station
-- [ ] Bar and kitchen display: incoming tickets, mark in progress / ready
-- [ ] Waiter gets notified when items are ready
+_No bar or kitchen display screens: the bartender gets a printed ticket as a backup to the spoken order._
+
+- [ ] Print queue: "send order" creates print jobs, one per printer (bar / kitchen, by category); simulated printer screens for the portfolio version
+- [ ] WebSocket push of print jobs to the printer station (instead of the printer polling)
+- [ ] Several terminals in one venue stay in sync (tabs and items update live)
 - [ ] Reconnect logic: resync missed events after a dropped connection
-- [ ] Concurrency: two waiters editing the same check
+- [ ] Concurrency: two users editing the same tab
 
-**Questions:** Why WebSockets instead of polling here? What's the source of truth, the event or the database? Optimistic locking vs last-write-wins, which fits a POS?
+**Questions:** Why WebSockets instead of polling here? What's the source of truth, the event or the database? Optimistic locking vs last-write-wins, which fits a POS? What if the printer is offline when an order is sent?
 
 ## Phase 4 — Auth & roles
 
 - [ ] Staff PIN login with a session per device
-- [ ] Roles: waiter, bartender, manager
+- [ ] Roles: admin (managers/owners) and normal (waiters/bartenders)
 - [ ] API-side authorization (e.g. only a manager can void or give discounts)
 - [ ] Audit log for voids, discounts and refunds
 - [ ] Rate limiting on PIN attempts
@@ -95,11 +99,11 @@ _Goal: the finished app live on a real server, deployed automatically. Do this w
 - [ ] Provision the VPS: SSH keys, firewall, Docker, Caddy with HTTPS on a domain
 - [ ] CD: on merge to `main`, build, push images to a registry, deploy to the VPS (decide how migrations run)
 - [ ] Sentry wired up in web and api
-- [ ] Playwright E2E: open table → order → split → pay → report, run in CI
+- [ ] Playwright E2E: open tab → order → print ticket → split → pay → report, run in CI
 - [ ] Automated nightly DB backups, plus one practiced restore
 - [ ] Load-test the WebSocket server (e.g. k6)
 - [ ] Structured logs and a basic uptime check
-- [ ] Seeded public demo with "Log in as waiter / manager" buttons; demo data resets nightly
+- [ ] Seeded public demo with "Log in as waiter / admin" buttons; demo data resets nightly
 
 **Questions:** How do you roll back a bad deploy? Where do production secrets live?
 
@@ -132,6 +136,14 @@ _One line each: date, decision, why._
 - 2026-11-13: CI runs tests against a real Postgres service container and applies all migrations to a fresh DB, instead of mocking the database.
 - 2026-11-13: Vitest; API split into `buildApp()` (testable with `app.inject`) and `index.ts` (starts the server).
 - 2026-11-13: Deploy (VPS, CD, Sentry) moved to Phase 7, near job applications, so I don't pay for a server for months. CI building and `pnpm stack:up` running the production images keep the deploy risk low until then.
+- 2026-11-14: Tab model instead of physical tables and areas: a tab is one group of guests from open to paid. Areas skipped, since bars here don't split service by area.
+- 2026-11-14: One `items` table (the menu) with a `category`, instead of separate kitchen and bar item tables.
+- 2026-11-14: Ordered items live in `tab_items`, one row per unit, with a price snapshot so later menu changes never alter old bills.
+- 2026-11-14: A person is just a number on `tab_items` (no seat table).
+- 2026-11-14: Printed tickets instead of bar/kitchen display screens, matching how bars here work. `sentAt` marks what's been printed, so only new items print.
+- 2026-11-14: Food prints on a separate kitchen printer, drinks on the bar printer; an item's category decides which ticket it goes on.
+- 2026-11-14: `sentAt` / `voidedAt` are nullable timestamps (empty = not yet), not booleans: they record when, and `voidedBy` records who.
+- 2026-11-14: Voids are kept and recorded (`voidedAt`, `voidedBy`), never deleted, so managers can spot void-after-cash theft.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
 ## Things I faked
