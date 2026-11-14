@@ -35,3 +35,6 @@
 - Liveness vs readiness checks in detail
 - Running migrations on deploy: one-off container vs on API startup (decide in the CD task)
 - Image size: distroless or slimmer base images, `pnpm deploy` internals
+- Indexes on foreign key columns (Postgres doesn't create them automatically); check with `EXPLAIN ANALYZE` in Phase 6
+- Unique PINs once they're hashed in Phase 4 (a hash can't be compared for uniqueness the same way)
+- Printing to a real thermal printer from a web app (ESC/POS, network printers, a local print agent)

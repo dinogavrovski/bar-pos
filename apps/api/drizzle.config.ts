@@ -10,7 +10,7 @@ if (!url) throw new Error('DATABASE_URL is not set (copy .env.example to .env)')
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: './src/db/schema.ts', // where you describe tables in TypeScript
+  schema: './src/db/schema/index.ts', // all tables, re-exported from one file
   out: './drizzle', // where generated SQL migration files go (committed to git)
   dbCredentials: { url },
   casing: 'snake_case', // createdAt in TS -> created_at in SQL (must match client.ts)
