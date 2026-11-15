@@ -105,6 +105,51 @@ describe('tab_items', () => {
       await expect(insert).rejects.toSatisfy(violates('tab_items_price_positive'))
     })
   })
+
+  it('rejects a blank note (tab_items_note_not_blank)', async () => {
+    await inRollback(async (db) => {
+      const { ana, espresso, tab } = await seedBasics(db)
+
+      const insert = db
+        .insert(tabItems)
+        .values({ tabId: tab.id, itemId: espresso.id, price: 8000, note: '   ', createdBy: ana.id })
+
+      await expect(insert).rejects.toSatisfy(violates('tab_items_note_not_blank'))
+    })
+  })
+
+  it('accepts a non-blank note (tab_items_note_not_blank)', async () => {
+    await inRollback(async (db) => {
+      const { ana, espresso, tab } = await seedBasics(db)
+
+      const [row] = await db
+        .insert(tabItems)
+        .values({
+          tabId: tab.id,
+          itemId: espresso.id,
+          price: 8000,
+          note: 'Extra hot',
+          createdBy: ana.id,
+        })
+        .returning()
+
+      expect(row?.note).toBe('Extra hot')
+    })
+  })
+  it('rejects a note that has just been opened and closed (tab_items_note_not_blank)', async () => {
+    await inRollback(async (db) => {
+      const { ana, espresso, tab } = await seedBasics(db)
+
+      const insert = db.insert(tabItems).values({
+        tabId: tab.id,
+        itemId: espresso.id,
+        price: 8000,
+        note: '',
+        createdBy: ana.id,
+      })
+      await expect(insert).rejects.toSatisfy(violates('tab_items_note_not_blank'))
+    })
+  })
 })
 
 describe('items', () => {

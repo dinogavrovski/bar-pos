@@ -15,6 +15,13 @@
       "when": 1794670063637,
       "tag": "0001_nervous_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794755191996,
+      "tag": "0002_plain_trish_tilby",
+      "breakpoints": true
     }
   ]
 }

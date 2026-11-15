@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, check } from 'drizzle-orm/pg-core'
+import { integer, pgTable, timestamp, check, text } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { tabs } from './tabs.js'
 import { items } from './items.js'
@@ -14,6 +14,7 @@ export const tabItems = pgTable(
     itemId: integer()
       .references(() => items.id)
       .notNull(),
+    note: text(),
     person: integer(),
     price: integer().notNull(),
     sentAt: timestamp({ withTimezone: true }),
@@ -27,5 +28,6 @@ export const tabItems = pgTable(
   (ti) => [
     check('tab_items_price_positive', sql`${ti.price} > 0`),
     check('tab_items_void_complete', sql`(${ti.voidedAt} IS NULL) = (${ti.voidedBy} IS NULL)`),
+    check('tab_items_note_not_blank', sql`${ti.note} IS NULL OR LENGTH(TRIM(${ti.note})) > 0`),
   ],
 )
