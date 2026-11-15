@@ -3,8 +3,8 @@
 ## Current status
 
 - **Phase:** 1 — Domain & data model (Phase 0 done)
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints, 13 constraint tests against real Postgres), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
-- **Next task:** Data model round 3: money (check, payment). Then shifts.
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints, 13 constraint tests against real Postgres), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`, modifiers as a `note` on tab_items, money round: `payments` table (cash/card, amount, card-only tip) with 6 constraint tests (25/25 green)
+- **Next task:** Data model round 4: shifts. Then the seed script (a realistic bar menu).
 - **Blockers:** none
 
 ---
@@ -149,6 +149,10 @@ _One line each: date, decision, why._
 - 2026-11-14: No `status` column on tabs: open means `closedAt IS NULL`, so the two can never disagree.
 - 2026-11-15: Modifiers are a free-text `note` on `tab_items` (e.g. "no olives"), printed under the item on the ticket. Real need is food changes, not drink options; no extra-cost options yet. Structured modifiers (option lists, prices) can come later if a venue needs them.
 - 2026-11-15: Constraint tests run against real Postgres, each test in a transaction that's always rolled back, and assert the constraint NAME, not just "it failed".
+- 2026-11-15: No separate check table: the tab is the bill. Its total is derived from its non-voided `tab_items`, never stored.
+- 2026-11-15: A payment is an amount on a tab (method, amount, tip, who, when). No link to which items it covered and no change/tendered tracking; cash + card on one tab is simply two payments.
+- 2026-11-15: Tip is its own column, not part of `amount`, so sales and tips report separately. Only card tips are recorded (they're on the terminal total); cash tips never pass through the POS.
+- 2026-11-15: A tab is paid when the sum of payment `amount`s equals the total exactly (API rule; tips don't count). Even splits use whole denars, and the leftover goes to the first person.
 - 2026-11-14: Voids are kept and recorded (`voidedAt`, `voidedBy`), never deleted, so managers can spot void-after-cash theft.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
@@ -165,4 +169,4 @@ _One line per session: date, machine, what got done._
 - 2026-11-05: Roadmap and CLAUDE.md created.
 - 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted. Dockerfiles + compose `app` profile, graceful SIGTERM shutdown. Vitest + first API tests, CI workflow (green on GitHub after fixing a transient pnpm download failure with retries), branch protection on. Deploy moved to Phase 7; Phase 0 done.
 - 2026-11-14: Data model round 1 designed (tab model, printed tickets instead of display screens) and implemented in Drizzle: users, items, tabs, tab_items with constraints, migration 0001. Constraints checked by hand in psql; automated tests next.
-- 2026-11-15: First tests I wrote myself: 13 constraint tests (`constraints.test.ts`) on a rollback-per-test helper (`src/test/db.ts`). 16/16 green. Modifiers decided as a free-text `note` on `tab_items` (migration 0002, blank notes rejected), 19/19 green.
+- 2026-11-15: First tests I wrote myself: 13 constraint tests (`constraints.test.ts`) on a rollback-per-test helper (`src/test/db.ts`). 16/16 green. Modifiers decided as a free-text `note` on `tab_items` (migration 0002, blank notes rejected), 19/19 green. Money round designed (the tab is the bill, payments are amounts, card-only tips) and `payments` implemented (migration 0003, 6 more tests, 25/25 green).
