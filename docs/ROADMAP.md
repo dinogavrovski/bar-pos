@@ -3,8 +3,8 @@
 ## Current status
 
 - **Phase:** 1 — Domain & data model (Phase 0 done)
-- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
-- **Next task:** Paper design, continued: modifiers, then money (check, payment), then shifts. Round 1 is in code: `users`, `items`, `tabs`, `tab_items` (migration 0001, constraints tested against Postgres).
+- **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints, 13 constraint tests against real Postgres), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`
+- **Next task:** Data model round 2: modifiers ("no ice", "oat milk +30 den"; which modifiers fit which items). Then money (check, payment), shifts.
 - **Blockers:** none
 
 ---
@@ -32,6 +32,7 @@ _Goal: the hardest design problem, solved on paper first, then in code with test
 
 - [ ] Paper design: venue, users, items (menu), tabs, tab_items (ordered items), modifiers, check, payment, shift
 - [ ] Drizzle schema + migrations + seed script (a realistic bar menu)
+- [x] Constraint tests: every CHECK / UNIQUE / enum / foreign key rule has a Vitest test that tries to break it
 - [ ] Shared Zod schemas in `packages/shared`
 - [ ] Pure domain functions: split evenly, by person, by item; move item between tabs; merge tabs
 - [ ] Unit tests for every split and rounding edge case
@@ -146,6 +147,7 @@ _One line each: date, decision, why._
 - 2026-11-14: Business rules enforced in Postgres too (CHECK, UNIQUE, enums), not only in API code: void needs both when and who, PIN unique per venue, prices > 0, people >= 1.
 - 2026-11-14: Schema split into one file per table under `src/db/schema/`, re-exported from `index.ts`.
 - 2026-11-14: No `status` column on tabs: open means `closedAt IS NULL`, so the two can never disagree.
+- 2026-11-15: Constraint tests run against real Postgres, each test in a transaction that's always rolled back, and assert the constraint NAME, not just "it failed".
 - 2026-11-14: Voids are kept and recorded (`voidedAt`, `voidedBy`), never deleted, so managers can spot void-after-cash theft.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
@@ -161,3 +163,5 @@ _One line per session: date, machine, what got done._
 
 - 2026-11-05: Roadmap and CLAUDE.md created.
 - 2026-11-13: Monorepo scaffold reviewed, CLAUDE.md moved to root, ESLint 9 flat config + Prettier + husky/lint-staged set up. Docker Postgres on :5433, first migration (`venues`) applied. Health endpoints + status page, verified with DB up/down/restarted. Dockerfiles + compose `app` profile, graceful SIGTERM shutdown. Vitest + first API tests, CI workflow (green on GitHub after fixing a transient pnpm download failure with retries), branch protection on. Deploy moved to Phase 7; Phase 0 done.
+- 2026-11-14: Data model round 1 designed (tab model, printed tickets instead of display screens) and implemented in Drizzle: users, items, tabs, tab_items with constraints, migration 0001. Constraints checked by hand in psql; automated tests next.
+- 2026-11-15: First tests I wrote myself: 13 constraint tests (`constraints.test.ts`) on a rollback-per-test helper (`src/test/db.ts`). 16/16 green.
