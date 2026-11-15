@@ -1,0 +1,2 @@
+ALTER TABLE "tab_items" ADD COLUMN "note" text;--> statement-breakpoint
+ALTER TABLE "tab_items" ADD CONSTRAINT "tab_items_note_not_blank" CHECK ("tab_items"."note" IS NULL OR LENGTH(TRIM("tab_items"."note")) > 0);
