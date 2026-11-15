@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 import { afterAll, describe, expect, it } from 'vitest'
 import { pool } from '../client.js'
 import { inRollback, pgErrorCode, seedBasics, violates } from '../../test/db.js'
-import { items, tabItems, tabs, users, venues } from './index.js'
+import { items, payments, tabItems, tabs, users, venues } from './index.js'
 
 // This file uses the shared pool directly (no buildApp), so close it ourselves.
 afterAll(async () => {
@@ -271,6 +271,108 @@ describe('tabs', () => {
       })
 
       await expect(insert).rejects.toSatisfy(violates('tabs_closed_after_opened'))
+    })
+  })
+})
+
+describe('payments', () => {
+  it('accepts a cash payment with no tip', async () => {
+    await inRollback(async (db) => {
+      const { ana, tab } = await seedBasics(db)
+
+      const [payment] = await db
+        .insert(payments)
+        .values({
+          tabId: tab.id,
+          method: 'cash',
+          amount: 10000,
+          createdBy: ana.id,
+        })
+        .returning()
+
+      expect(payment?.method).toBe('cash')
+      expect(payment?.tip).toBe(0)
+    })
+  })
+  it('accepts a card payment with a tip', async () => {
+    await inRollback(async (db) => {
+      const { ana, tab } = await seedBasics(db)
+
+      const [payment] = await db
+        .insert(payments)
+        .values({
+          tabId: tab.id,
+          method: 'card',
+          amount: 10000,
+          tip: 1000,
+          createdBy: ana.id,
+        })
+        .returning()
+
+      expect(payment?.method).toBe('card')
+      expect(payment?.tip).toBe(1000)
+    })
+  })
+
+  it('rejects a payment on a tab that doesnt exist', async () => {
+    await inRollback(async (db) => {
+      const { ana } = await seedBasics(db)
+
+      const insert = db.insert(payments).values({
+        tabId: 999_999,
+        method: 'cash',
+        amount: 10000,
+        tip: 0,
+        createdBy: ana.id,
+      })
+
+      await expect(insert).rejects.toSatisfy(violates('payments_tab_id_tabs_id_fk'))
+    })
+  })
+  it('rejects amount zero', async () => {
+    await inRollback(async (db) => {
+      const { ana, tab } = await seedBasics(db)
+
+      const insert = db.insert(payments).values({
+        tabId: tab.id,
+        method: 'cash',
+        amount: 0,
+        tip: 0,
+        createdBy: ana.id,
+      })
+
+      await expect(insert).rejects.toSatisfy(violates('payments_amount_positive'))
+    })
+  })
+
+  it('rejects negative tip', async () => {
+    await inRollback(async (db) => {
+      const { ana, tab } = await seedBasics(db)
+
+      const insert = db.insert(payments).values({
+        tabId: tab.id,
+        method: 'card',
+        amount: 10000,
+        tip: -100,
+        createdBy: ana.id,
+      })
+
+      await expect(insert).rejects.toSatisfy(violates('payments_tip_not_negative'))
+    })
+  })
+  it('rejects cash payment with a tip', async () => {
+    await inRollback(async (db) => {
+      const { ana, tab } = await seedBasics(db)
+
+      const insert = db.insert(payments).values({
+        tabId: tab.id,
+        method: 'cash',
+        amount: 10000,
+        tip: 100,
+        createdBy: ana.id,
+      })
+
+      await expect(insert).rejects.toSatisfy(violates('payments_method_card_or_tip_zero'))
     })
   })
 })
