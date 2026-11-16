@@ -4,7 +4,7 @@
 
 - **Phase:** 1 — Domain & data model (Phase 0 done)
 - **Last done:** Monorepo scaffold, architecture sketch, CLAUDE.md moved to repo root, ESLint + Prettier + husky/lint-staged pre-commit hook, Postgres 18 in docker-compose + first Drizzle migration (`venues`), round 1 of the data model in Drizzle (users, items, tabs, tab_items with check/unique constraints, 13 constraint tests against real Postgres), `/api/health/live` + `/api/health/ready` and a server-rendered status page, multi-stage Dockerfiles (api 289 MB, web 356 MB) runnable with `pnpm stack:up`, GitHub Actions CI (checks + Postgres-backed tests + image builds), branch protection on `main`, modifiers as a `note` on tab_items, money round: `payments` table (cash/card, amount, card-only tip), shifts round: `shifts` table with a partial unique index (one open shift per venue) and `shiftId` on payments (39/39 green), `pnpm db:seed` (Bar Demo: 5 staff, 303 real menu items)
-- **Next task:** Shared Zod schemas in `packages/shared`, then the pure split functions.
+- **Next task:** Last shared schemas (open/close shift, PIN login), then the pure split functions.
 - **Blockers:** none
 
 ---
@@ -162,6 +162,9 @@ _One line each: date, decision, why._
 - 2026-11-16: Zod 4 (not 3) in `packages/shared`: nothing used Zod yet, so upgrading was free.
 - 2026-11-16: Zod schemas describe REQUESTS (what the user decides, e.g. `openTabInput = { name, people }`), not tables. The server adds `venueId`, `openedBy` and timestamps; unknown fields from the client are dropped. Zod is the friendly first check, the DB constraints stay as the last line (defence in depth).
 - 2026-11-16: `packages/shared` has its own Vitest unit tests (no DB, no Docker); they assert the exact error message, since that is what the waiter sees.
+- 2026-11-17: Order requests carry a quantity per line (`{ itemId, quantity, person?, note? }`); the API expands each line into one `tab_items` row per unit. No price in the request: the API takes it from the menu.
+- 2026-11-17: Money in requests is integer cents; the terminal converts denars to cents once, where the waiter types. Zod checks what is always true (whole number, > 0, a sanity max); "not more than what is left to pay" needs the tab, so it is an API rule.
+- 2026-11-17: Two-field rules (cash means tip 0) use `.refine()` on the whole object, with `path` pointing at the field to mark.
 - 2026-11-14: Voids are kept and recorded (`voidedAt`, `voidedBy`), never deleted, so managers can spot void-after-cash theft.
 - 2026-11-13: Claude writes tooling/config boilerplate; my hands-on learning goes into core logic (domain, real-time, auth, money).
 
@@ -180,3 +183,4 @@ _One line per session: date, machine, what got done._
 - 2026-11-14: Data model round 1 designed (tab model, printed tickets instead of display screens) and implemented in Drizzle: users, items, tabs, tab_items with constraints, migration 0001. Constraints checked by hand in psql; automated tests next.
 - 2026-11-15: First tests I wrote myself: 13 constraint tests (`constraints.test.ts`) on a rollback-per-test helper (`src/test/db.ts`). 16/16 green. Modifiers decided as a free-text `note` on `tab_items` (migration 0002, blank notes rejected), 19/19 green. Money round designed (the tab is the bill, payments are amounts, card-only tips) and `payments` implemented (migration 0003, 6 more tests, 25/25 green).
 - 2026-11-16: Shifts round: `shifts` table (starting and counted cash, close-complete check), first partial unique index (one open shift per venue), `shift_id` on payments (migration 0004), 14 more tests written by me (39/39 green). Constraint tests split into one file per table, next to its schema file. Seed script: `pnpm db:seed` with the full menu (303 items) and 5 demo staff. Zod 4 + Vitest in `packages/shared`, first schema `openTabInput` with 10 tests I wrote.
+- 2026-11-17: Shared schemas: `addItemsInput` (lines with quantity, notes trimmed and empty turned into no note) and `takePaymentInput` (cents, sanity limits, cash-tip rule with `.refine()`), 38/38 green in shared.
