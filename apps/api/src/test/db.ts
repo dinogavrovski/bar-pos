@@ -48,13 +48,19 @@ export async function seedBasics(db: TestDb) {
     .returning()
   if (!espresso) throw new Error('seed failed: item')
 
+  const [shift] = await db
+    .insert(schema.shifts)
+    .values({ venueId: venue.id, openedBy: bojan.id, startingCash: 500000 })
+    .returning()
+  if (!shift) throw new Error('seed failed: shift')
+
   const [tab] = await db
     .insert(schema.tabs)
     .values({ venueId: venue.id, openedBy: ana.id, name: "Marko's group", people: 3 })
     .returning()
   if (!tab) throw new Error('seed failed: tab')
 
-  return { venue, ana, bojan, espresso, tab }
+  return { venue, ana, bojan, espresso, tab, shift }
 }
 
 // Drizzle wraps Postgres errors in its own error; the original Postgres error is in `.cause`.

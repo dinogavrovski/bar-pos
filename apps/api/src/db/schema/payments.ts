@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import { paymentMethod } from './enums.js'
 import { tabs } from './tabs.js'
 import { users } from './users.js'
+import { shifts } from './shifts.js'
 
 export const payments = pgTable(
   'payments',
@@ -10,6 +11,9 @@ export const payments = pgTable(
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     tabId: integer()
       .references(() => tabs.id)
+      .notNull(),
+    shiftId: integer()
+      .references(() => shifts.id)
       .notNull(),
     method: paymentMethod().notNull(),
     amount: integer().notNull(),
