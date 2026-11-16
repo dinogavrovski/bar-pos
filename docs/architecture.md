@@ -40,3 +40,4 @@
 - Cleaning user input in the API with Zod (Phase 2): trim notes and turn empty or whitespace-only (incl. newlines/tabs) into `null` before they reach the DB. The DB check `tab_items_note_not_blank` only catches spaces, since `TRIM` doesn't strip `
 ` or `	`.
 - Printing to a real thermal printer from a web app (ESC/POS, network printers, a local print agent)
+- Splitting unit tests from integration tests (when the pure split functions arrive): name DB tests `*.int.test.ts` and use two Vitest projects, so unit tests run without Docker in milliseconds
