@@ -13,6 +13,7 @@
     "db:generate": "pnpm --filter @barpos/api db:generate",
     "db:migrate": "pnpm --filter @barpos/api db:migrate",
     "db:studio": "pnpm --filter @barpos/api db:studio",
+    "db:seed": "pnpm --filter @barpos/api db:seed",
     "stack:up": "docker compose --profile app up -d --build --wait",
     "stack:down": "docker compose --profile app down",
     "build": "pnpm -r build",
